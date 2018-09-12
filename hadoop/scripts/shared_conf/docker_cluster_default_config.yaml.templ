@@ -1,0 +1,35 @@
+cluster_name : "ahamadi_cluster"
+
+NAMENODE:
+  envs :
+  - env1 : 2
+  files:
+  - file :
+     name : core-site.xml
+     properties :
+      - ["fs.defaultFS", "hdfs://namenode:8020"]
+      - ["hadoop.proxyuser.hue.hosts", "*"]
+      - ["hadoop.proxyuser.hue.groups", "*"]
+  - file :
+     name : hdfs-site.xml
+     properties :
+      - ["dfs.namenode.name.dir", "file:///hadoop/dfs/name"]
+      - ["dfs.permissions.enabled", "false"]
+      - ["dfs.webhdfs.enabled", "true"]
+      - ["dfs.namenode.rpc-bind-host", "0.0.0.0"]
+      - ["dfs.namenode.servicerpc-bind-host", "0.0.0.0"]
+      - ["dfs.namenode.https-bind-host", "0.0.0.0"]
+      - ["dfs.client.use.datanode.hostname", "true"]
+      - ["dfs.datanode.use.datanode.hostname", "true"]
+      - ["dfs.namenode.safemode.threshold-pct", "0"]
+      - ["dfs.namenode.safemode.min.datanodes", "0"]
+      - ["dfs.namenode.safemode.extension", "0"]
+
+DATANODE:
+  files:
+  - file :
+     name : hdfs-site.xml
+     properties :
+      - ["dfs.datanode.data.dir", "file:///hadoop/dfs/data"]
+
+

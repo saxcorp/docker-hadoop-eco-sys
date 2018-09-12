@@ -1,0 +1,103 @@
+version: '2'
+services:
+  ambari-postgresql:
+    image: saxcorp/ambari_postgresql
+    hostname: hive-postgressql
+    ports:
+      - 5432:5432
+
+  ambari-server:
+    image: saxcorp/ambari_server
+    container_name: ambari-server
+    hostname: ambari-server
+    ports:
+      - 8080:8080
+    depends_on:
+      - ambari-postgresql
+#    command: sleep 1000000000000000
+    volumes:
+     - /c/Users/aibrahim/Documents/saxcorp_hadoop_cluster_v2/data/namenode/hadoop_conf:/etc/hadoop
+     - /c/Users/aibrahim/Documents/saxcorp_hadoop_cluster_v2/data/namenode/shared_conf/etc:/etc/docker_cluster_tools/shared_conf/etc
+     - /c/Users/aibrahim/Documents/saxcorp_hadoop_cluster_v2/data/namenode/shared_conf/hadoop:/etc/docker_cluster_tools/shared_conf/hadoop
+     - /c/Users/aibrahim/Documents/saxcorp_hadoop_cluster_v2/docker_cluster_config.yaml:/etc/docker_cluster_tools/shared_conf/docker_cluster_config.yaml
+     - /c/Users/aibrahim/Documents/saxcorp_hadoop_cluster_v2/data/log:/etc/docker_cluster_tools/log
+#     - /c/Users/aibrahim/Documents/saxcorp_hadoop_cluster_v2/ambari/ambari-agent.ini:/etc/ambari-agent/conf/ambari-agent.ini
+
+  namenode:
+    image: saxcorp/hadoop_2.7.3_namenode
+#    command: sleep 1000000000000000
+    container_name: namenode
+    hostname: namenode
+    ports:
+      - 50070:50070
+    depends_on:
+      - ambari-server
+    volumes_from:
+      - ambari-server:rw
+
+  datanode1:
+    image: saxcorp/hadoop_2.7.3_datanode
+    container_name: datanode1
+    hostname: datanode1
+    depends_on:
+      - namenode
+    volumes_from:
+      - namenode:rw
+    ports:
+      - 50075:50075
+
+  datanode2:
+    image: saxcorp/hadoop_2.7.3_datanode
+    container_name: datanode2
+    hostname: datanode2
+    depends_on:
+      - namenode
+    volumes_from:
+      - namenode:rw
+
+  resourcemanager:
+    image: saxcorp/hadoop_2.7.3_resourcemanager
+    container_name: resourcemanager
+    hostname: resourcemanager
+    depends_on:
+      - namenode
+#      - datanode2
+      - datanode1
+    volumes_from:
+      - namenode:rw
+    ports:
+      - 8088:8088
+
+  nodemanager1:
+    image: saxcorp/hadoop_2.7.3_nodemanager
+    container_name: nodemanager1
+    hostname: nodemanager1
+    depends_on:
+      - resourcemanager
+    volumes_from:
+      - namenode:rw
+
+  nodemanager2:
+    image: saxcorp/hadoop_2.7.3_nodemanager
+    container_name: nodemanager2
+    hostname: nodemanager2
+    depends_on:
+      - resourcemanager
+    volumes_from:
+      - namenode:rw
+
+  historyserver:
+    image: saxcorp/hadoop_2.7.3_historyserver
+    container_name: historyserver
+    hostname: historyserver
+    depends_on:
+      - namenode
+    volumes_from:
+      - namenode:rw
+    ports:
+      - 8188:8188
+      - 19888:19888
+      - 10020:10020
+
+
+

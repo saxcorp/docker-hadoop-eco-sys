@@ -1,0 +1,190 @@
+version: '2'
+services:
+  namenode:
+    image: saxcorp/hadoop_2.7.3_namenode
+#    command: sleep 1000000000000000
+    container_name: namenode
+    hostname: namenode
+    ports:
+      - 50070:50070
+    volumes:
+     - namenode-data:/hadoop/dfs/name
+     - ${PWD}/data/namenode/hadoop_conf:/etc/hadoop
+     - ${PWD}/data/namenode/shared_conf/etc:/etc/docker_cluster_tools/shared_conf/etc
+     - ${PWD}/data/namenode/shared_conf/hadoop:/etc/docker_cluster_tools/shared_conf/hadoop
+     - ${PWD}/docker_cluster_config.yaml:/etc/docker_cluster_tools/shared_conf/docker_cluster_config.yaml
+     - ${PWD}/data/log:/etc/docker_cluster_tools/log
+
+  datanode1:
+    image: saxcorp/hadoop_2.7.3_datanode
+    container_name: datanode1
+    hostname: datanode1
+    depends_on:
+      - namenode
+    volumes_from:
+      - namenode:rw
+    ports:
+      - 50075:50075
+    volumes:
+      - datanode1-data:/hadoop/dfs/data
+
+  datanode2:
+    image: saxcorp/hadoop_2.7.3_datanode
+    container_name: datanode2
+    hostname: datanode2
+    depends_on:
+      - namenode
+    volumes_from:
+      - namenode:rw
+    volumes:
+      - datanode2-data:/hadoop/dfs/data
+
+  resourcemanager:
+    image: saxcorp/hadoop_2.7.3_resourcemanager
+    container_name: resourcemanager
+    hostname: resourcemanager
+    depends_on:
+      - namenode
+#      - datanode2
+      - datanode1
+    volumes_from:
+      - namenode:rw
+    ports:
+      - 8088:8088
+
+  nodemanager1:
+    image: saxcorp/hadoop_2.7.3_nodemanager
+    container_name: nodemanager1
+    hostname: nodemanager1
+    depends_on:
+      - resourcemanager
+    volumes_from:
+      - namenode:rw
+
+  nodemanager2:
+    image: saxcorp/hadoop_2.7.3_nodemanager
+    container_name: nodemanager2
+    hostname: nodemanager2
+    depends_on:
+      - resourcemanager
+    volumes_from:
+      - namenode:rw
+
+  historyserver:
+    image: saxcorp/hadoop_2.7.3_historyserver
+    container_name: historyserver
+    hostname: historyserver
+    depends_on:
+      - namenode
+    volumes_from:
+      - namenode:rw
+    ports:
+      - 8188:8188
+      - 19888:19888
+      - 10020:10020
+
+  hive-postgressql:
+    image: saxcorp/hadoop_2.7.3_hive-postgressql
+    hostname: hive-postgressql
+    ports:
+      - 5432:5432
+
+  hive-metastore:
+    image: saxcorp/hadoop_2.7.3_hive-server
+    container_name: hive-metastore
+    hostname: hive-metastore
+    environment:
+      - HIVE_SERVICE=METASTORE
+    depends_on:
+      - namenode
+      - hive-postgressql
+    volumes_from:
+      - namenode:rw
+
+  hive-server:
+    image: saxcorp/hadoop_2.7.3_hive-server
+    container_name: hive-server
+    hostname: hive-server
+    environment:
+      - HIVE_SERVICE=HIVESERVER2
+    ports:
+      - 10000:10000
+    depends_on:
+      - hive-metastore
+    volumes_from:
+      - namenode:rw
+
+#  hue:
+#    image: saxcorp/hadoop_2.7.3_hue
+#    container_name: hue
+#    hostname: hue
+#    depends_on:
+#      - namenode
+#      - nodemanager1
+#      - nodemanager2
+#      - datanode1
+#      - datanode2
+#    ports:
+#      - 8000:8000
+#    volumes_from:
+#      - namenode:rw
+
+##"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""####
+  spark-master:
+    image: saxcorp/hadoop_2.7.3_spark
+    container_name: spark-master
+    hostname: spark-master
+    depends_on:
+      - namenode
+      - datanode1
+    ports:
+      - 8080:8080
+      - 7077:7077
+      - 4040:4040
+    environment:
+      - SPARK_SERVICE=MASTER
+    volumes_from:
+      - namenode:rw
+
+  spark-worker1:
+    image: saxcorp/hadoop_2.7.3_spark
+    container_name: spark-worker1
+    hostname: spark-worker1
+    depends_on:
+      - spark-master
+    ports:
+      - 8091:8081
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_SERVICE=SLAVE
+    volumes_from:
+      - namenode:rw
+
+  spark-historyserver:
+    image: saxcorp/hadoop_2.7.3_spark
+    container_name: spark-historyserver
+    hostname: spark-historyserver
+    depends_on:
+      - spark-master
+    ports:
+      - 18080:18080
+    environment:
+      - SPARK_SERVICE=HISTORYSERVER
+    volumes_from:
+      - namenode:rw
+
+#  spark-notebook:
+#    image: saxcorp/hadoop_2.7.3_spark-notebook
+#    container_name: spark-notebook
+#    hostname: spark-notebook
+#    depends_on:
+#      - spark-master
+#    ports:
+#      - 9001:9001
+#    environment:
+#      - SPARK_MASTER=spark://spark-master.hadoop:7077
+
+volumes:
+  namenode-data:
+  datanode1-data:
+  datanode2-data:

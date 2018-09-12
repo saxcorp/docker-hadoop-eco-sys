@@ -1,0 +1,135 @@
+cluster_name : "ahamadi_cluster"
+
+NAMENODE:
+  envs :
+  - env1 : 2
+  files:
+  - file :
+     name : core-site.xml
+     properties :
+      - ["fs.defaultFS", "hdfs://namenode:8020"]
+      - ["hadoop.proxyuser.hue.hosts", "*"]
+      - ["hadoop.proxyuser.hue.groups", "*"]
+      - ["hadoop.proxyuser.hive.hosts", "*"]
+      - ["hadoop.proxyuser.hive.groups", "*"]
+      - ["hadoop.proxyuser.spark.hosts", "*"]
+      - ["hadoop.proxyuser.spark.groups", "*"]
+      - ["hadoop.proxyuser.root.hosts", "*"]
+      - ["hadoop.proxyuser.root.groups", "*"]
+  - file :
+     name : hdfs-site.xml
+     properties :
+      - ["dfs.namenode.name.dir", "file:///hadoop/dfs/name"]
+      - ["dfs.permissions.enabled", "false"]
+      - ["dfs.webhdfs.enabled", "true"]
+      - ["dfs.namenode.rpc-bind-host", "0.0.0.0"]
+      - ["dfs.namenode.servicerpc-bind-host", "0.0.0.0"]
+      - ["dfs.namenode.https-bind-host", "0.0.0.0"]
+      - ["dfs.client.use.datanode.hostname", "true"]
+      - ["dfs.datanode.use.datanode.hostname", "true"]
+      - ["dfs.namenode.safemode.threshold-pct", "0"]
+      - ["dfs.namenode.safemode.min.datanodes", "0"]
+      - ["dfs.namenode.safemode.extension", "0"]
+      - ["dfs.permissions.superusergroup", "hdfs"]
+      - ["dfs.replication", "1"]
+DATANODE:
+  files:
+  - file :
+     name : hdfs-site.xml
+     properties :
+      - ["dfs.datanode.data.dir", "file:///hadoop/dfs/data"]
+RESOURCEMANAGER:
+  files:
+  - file :
+     name : yarn-site.xml
+     properties :
+      - ["yarn.log-aggregation-enable", "true"]
+      - ["yarn.resourcemanager.address", "resourcemanager:8032"]
+      - ["yarn.resourcemanager.scheduler.address", "resourcemanager:8030"]
+      - ["yarn.resourcemanager.resource-tracker.address", "resourcemanager:8031"]
+      - ["yarn.resourcemanager.admin.address", "resourcemanager:8033"]
+      - ["yarn.resourcemanager.webapp.address", "resourcemanager:8088"]
+      - ["yarn.resourcemanager.hostname", "resourcemanager"]
+      - ["yarn.resourcemanager.scheduler.class", "org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler"]
+      - ["yarn.nodemanager.resource.memory-mb", "1536"]
+      - ["yarn.scheduler.minimum-allocation-mb", "128"]
+      - ["yarn.scheduler.maximum-allocation-mb", "1536"]
+      - ["yarn.nodemanager.vmem-check-enabled", "false"]
+      - ["yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage", "100"]
+  - file :
+     name : capacity-scheduler.xml
+     properties :
+      - ["yarn.scheduler.capacity.maximum-applications", "10000"]
+      - ["yarn.scheduler.capacity.maximum-am-resource-percent", "0.1"]
+      - ["yarn.scheduler.capacity.resource-calculator", "org.apache.hadoop.yarn.util.resource.DefaultResourceCalculator"]
+      - ["yarn.scheduler.capacity.root.queues", "default"]
+      - ["yarn.scheduler.capacity.root.default.capacity", "100"]
+      - ["yarn.scheduler.capacity.root.default.user-limit-factor", "1"]
+      - ["yarn.scheduler.capacity.root.default.maximum-capacity", "100"]
+      - ["yarn.scheduler.capacity.root.default.state", "RUNNING"]
+      - ["yarn.scheduler.capacity.root.default.acl_submit_applications", "*"]
+      - ["yarn.scheduler.capacity.root.default.acl_administer_queue", "*"]
+      - ["yarn.scheduler.capacity.node-locality-delay", "40"]
+      - ["yarn.scheduler.capacity.queue-mappings", ""]
+      - ["yarn.scheduler.capacity.queue-mappings-override.enable", "false"]
+  - file :
+     name : mapred-site.xml
+     properties :
+      - ["mapreduce.framework.name", "yarn"]
+      - ["mapreduce.task.io.sort.mb", "512"]
+      - ["mapreduce.task.io.sort.factor", "100"]
+      - ["mapreduce.reduce.shuffle.parallelcopies", "50"]
+      - ["yarn.app.mapreduce.am.resource.mb", "512"]
+      - ["mapreduce.map.memory.mb", "256"]
+      - ["mapreduce.map.java.opts", "-Xmx1024M"]
+      - ["mapreduce.reduce.memory.mb", "256"]
+      - ["mapreduce.reduce.java.opts", "-Xmx2560M"]
+NODEMANAGER:
+  files:
+  - file :
+     name : yarn-site.xml
+     properties :
+      - ["yarn.nodemanager.vmem-pmem-ratio", "2.1"]
+      - ["yarn.nodemanager.local-dirs", "${hadoop.tmp.dir}/nm-local-dir"]
+      - ["yarn.nodemanager.log-dirs", "file:///hadoop/dfs/data"]
+      - ["yarn.nodemanager.log.retain-seconds", "10800"]
+      - ["yarn.nodemanager.remote-app-log-dir", "/app-logs"]
+      - ["yarn.nodemanager.remote-app-log-dir-suffix", "logs"]
+      - ["yarn.nodemanager.aux-services", "mapreduce_shuffle"]
+HISTORYSERVER:
+  files:
+  - file :
+     name : mapred-site.xml
+     properties :
+      - ["mapreduce.jobhistory.address", "0.0.0.0:10020"]
+      - ["mapreduce.jobhistory.webapp.address", "0.0.0.0:19888"]
+      - ["mapreduce.jobhistory.intermediate-done-dir", "/mr-history/tmp"]
+      - ["mapreduce.jobhistory.done-dir", "/mr-history/done"]
+HIVE:
+  files:
+  - file :
+     name : hive-site.xml
+     properties :
+      - ["javax.jdo.option.ConnectionURL", "jdbc:postgresql://hive-postgressql/metastore"]
+      - ["javax.jdo.option.ConnectionDriverName", "org.postgresql.Driver"]
+      - ["javax.jdo.option.ConnectionUserName", "hive"]
+      - ["javax.jdo.option.ConnectionPassword", "hive"]
+      - ["datanucleus.autoCreateSchema", "false"]
+      - ["hive.metastore.uris", "thrift://hive-metastore:9083"]
+SPARK:
+  files:
+  - file :
+     name : spark-defaults.conf
+     properties :
+      - ["spark.master", "spark://spark-master:6066"]
+      - ["spark.yarn.historyServer.address", "spark-historyserver:18080"]
+      - ["spark.eventLog.dir", "hdfs://namenode:8020/spark-logs"]
+      - ["spark.eventLog.enabled", "true"]
+      - ["spark.history.fs.logDirectory", "hdfs://namenode:8020/spark-logs"]
+      - ["spark.history.ui.port", "18080"]
+      - ["spark.history.provider", "org.apache.spark.deploy.history.FsHistoryProvider"]
+      - ["spark.serializer", "org.apache.spark.serializer.KryoSerializer"]
+      - ["spark.driver.memory", "512MB"]
+      - ["spark.yarn.am.memory", "512m"]
+      - ["spark.executor.memory", "512m"]
+
